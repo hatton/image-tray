@@ -36,6 +36,11 @@ black boxes in anything that doesn't.
 
 ![Screen Tray settings](docs/settings.png)
 
+## Building
+
+See [BUILDING.md](BUILDING.md) for requirements, build and install steps, and notes on how
+the code is laid out.
+
 ## Licence
 
 [MIT](LICENSE)
