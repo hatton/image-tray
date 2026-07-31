@@ -1,4 +1,4 @@
-# Building Screen Tray
+# Building Screenshot Tray
 
 ## Requirements
 
@@ -11,11 +11,11 @@ needs only the .NET 10 Desktop Runtime.
 ```powershell
 dotnet build
 dotnet test
-dotnet run --project src/ScreenTray
+dotnet run --project src/ScreenshotTray
 ```
 
 To produce the single-file executable, install it to
-`%LOCALAPPDATA%\Programs\ScreenTray`, and restart the running copy:
+`%LOCALAPPDATA%\Programs\ScreenshotTray`, and restart the running copy:
 
 ```powershell
 ./deploy.ps1
@@ -29,17 +29,17 @@ entry in the Run key, which is why `deploy.ps1` puts it somewhere stable.
 
 | Path | What lives there |
 | --- | --- |
-| `src/ScreenTray/Services` | Folder watching, rotation, clipboard, thumbnails, window placement, autostart |
-| `src/ScreenTray/ViewModels` | `TrayViewModel` coordinates everything; `ShotViewModel` is one tile |
-| `src/ScreenTray/Controls` | `ShotTile`, including its animations and the width splitter |
-| `src/ScreenTray/Theme` | The light and dark palettes, swapped at runtime |
-| `src/ScreenTray/TileMetrics.cs` | All the tile sizing rules, deliberately pure and testable |
-| `tests/ScreenTray.Tests` | xunit tests |
-| `tools/make-icon.ps1` | Regenerates `src/ScreenTray/Assets/app.ico` |
+| `src/ScreenshotTray/Services` | Folder watching, rotation, clipboard, thumbnails, window placement, autostart |
+| `src/ScreenshotTray/ViewModels` | `TrayViewModel` coordinates everything; `ShotViewModel` is one tile |
+| `src/ScreenshotTray/Controls` | `ShotTile`, including its animations and the width splitter |
+| `src/ScreenshotTray/Theme` | The light and dark palettes, swapped at runtime |
+| `src/ScreenshotTray/TileMetrics.cs` | All the tile sizing rules, deliberately pure and testable |
+| `tests/ScreenshotTray.Tests` | xunit tests |
+| `tools/make-icon.ps1` | Regenerates `src/ScreenshotTray/Assets/app.ico` |
 
 ## The app icon is generated
 
-`src/ScreenTray/Assets/app.ico` is committed, but it is produced by
+`src/ScreenshotTray/Assets/app.ico` is committed, but it is produced by
 `tools/make-icon.ps1` rather than drawn by hand. Edit the script and re-run it rather than
 editing the `.ico`:
 
@@ -53,11 +53,11 @@ did not match the tray icon.
 
 ## Settings and logs
 
-Both live in `%APPDATA%\ScreenTray\`:
+Both live in `%APPDATA%\ScreenshotTray\`:
 
 - `settings.json` — watched folder, keep count, thumbnail width, theme, window placement.
   Delete it to start over; the app will ask for a folder on the next launch.
-- `screentray.log` — warnings only, truncated when it passes 256 KB.
+- `screenshottray.log` — warnings only, truncated when it passes 256 KB.
 
 Saves are written to a temp file and swapped into place, so a crash mid-write cannot leave
 a corrupt settings file. A file that will not parse falls back to defaults rather than
