@@ -1,0 +1,154 @@
+<Window x:Class="ScreenTray.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:controls="clr-namespace:ScreenTray.Controls"
+        xmlns:local="clr-namespace:ScreenTray"
+        Title="Screen Tray"
+        Width="920" Height="200"
+        MinWidth="360" MinHeight="124"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        ShowInTaskbar="True"
+        ShowActivated="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Icon="/Assets/app.ico">
+
+    <!-- CaptionHeight matches the top bar, which hands the drag, Aero Snap, and
+         double-click-to-maximise behaviour back to Windows instead of
+         reimplementing them with DragMove. -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="30"
+                            ResizeBorderThickness="6"
+                            GlassFrameThickness="0"
+                            CornerRadius="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <local:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
+    <Border BorderBrush="{DynamicResource WindowBorderBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Grid.Row="0" Background="{DynamicResource ChromeBackgroundBrush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- The watched folder is no longer shown here; it is on the tooltip
+                     and in Settings, which keeps a 30px bar from turning into a
+                     status line. -->
+                <StackPanel Orientation="Horizontal"
+                            Margin="9,0,8,0"
+                            VerticalAlignment="Center"
+                            ToolTip="{Binding WatchedFolder}">
+                    <Image Width="16" Height="16" Margin="0,0,7,0"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Source>
+                            <!-- Decoded at 32 so it stays crisp at 150% and 200%
+                                 scaling, where 16 device-independent pixels are 24
+                                 or 32 real ones. -->
+                            <BitmapImage UriSource="/Assets/app.ico" DecodePixelWidth="32" />
+                        </Image.Source>
+                    </Image>
+                    <TextBlock Text="Screen Tray"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Margin="0,0,3,0"
+                            VerticalAlignment="Center"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource ChromeButton}"
+                            Click="OnSettingsClick"
+                            ToolTip="Settings">
+                        <TextBlock Text="&#xE713;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="13" />
+                    </Button>
+                    <Button Style="{StaticResource CloseButton}"
+                            Click="OnCloseClick"
+                            ToolTip="Close to the tray. Click the tray icon to bring it back.">
+                        <TextBlock Text="&#xE711;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="13" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- The strip -->
+            <Grid Grid.Row="1">
+                <ScrollViewer x:Name="Strip"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              Focusable="False"
+                              SizeChanged="OnStripSizeChanged"
+                              PreviewMouseWheel="OnStripMouseWheel">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource SlimScrollBar}" />
+                    </ScrollViewer.Resources>
+
+                    <ItemsControl x:Name="Tiles" ItemsSource="{Binding Shots}" Margin="11,8,0,4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- No right margin: the tile now includes the gap
+                                     itself, so that the gap can carry a splitter. -->
+                                <controls:ShotTile
+                                    VerticalAlignment="Center"
+                                    TileHeight="{Binding DataContext.TileHeight, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CellAspect="{Binding DataContext.CellAspect, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Empty state, which doubles as the way out of a missing folder -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Margin="24,0"
+                            Visibility="{Binding HasShots, Converter={StaticResource NotBoolToVisibility}}">
+                    <TextBlock Text="{Binding EmptyTitle}"
+                               Foreground="{DynamicResource TextBrush}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding EmptyDetail}"
+                               Foreground="{DynamicResource SubtleTextBrush}"
+                               FontSize="11"
+                               Margin="0,4,0,0"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="460"
+                               HorizontalAlignment="Center" />
+                    <Button Content="Choose folder"
+                            Style="{StaticResource AccentButton}"
+                            Command="{Binding ChooseFolderCommand}"
+                            HorizontalAlignment="Center"
+                            Margin="0,10,0,0" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
