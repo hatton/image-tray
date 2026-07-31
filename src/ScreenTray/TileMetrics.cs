@@ -41,8 +41,17 @@ public static class TileMetrics
 
     private const double FallbackAspect = 16d / 10d;
 
+    /// <summary>
+    /// Brings a stored or dragged cell shape into range. Garbage falls back to the
+    /// default rather than to the narrowest cell, so a corrupt settings file gives you
+    /// normal thumbnails instead of a row of slivers. Deliberately does not share the
+    /// image-aspect fallback, which is 16:10 and would quietly give cells the wrong
+    /// default shape.
+    /// </summary>
     public static double ClampCellAspect(double cellAspect) =>
-        Math.Clamp(Sanitise(cellAspect), MinCellAspect, MaxCellAspect);
+        double.IsNaN(cellAspect) || double.IsInfinity(cellAspect) || cellAspect <= 0
+            ? DefaultCellAspect
+            : Math.Clamp(cellAspect, MinCellAspect, MaxCellAspect);
 
     /// <summary>The uniform cell every tile occupies.</summary>
     public static TileSize ResolveCell(double trayHeight, double cellAspect)

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -32,11 +33,10 @@ public class ClipboardRoundTripTests
             {
                 ClipboardService.CopyImage(path);
 
-                var data = Clipboard.GetDataObject();
-                Assert.NotNull(data);
+                var data = ReadClipboard();
 
                 // PNG: what Figma, browsers, Slack, and VS Code read.
-                Assert.True(data!.GetDataPresent("PNG"), "The PNG format is missing from the clipboard.");
+                Assert.True(data.GetDataPresent("PNG"), "The PNG format is missing from the clipboard.");
                 var png = ReadStream(data, "PNG");
                 var decoded = ToBgra32(new PngBitmapDecoder(
                     png, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0]);
@@ -79,9 +79,8 @@ public class ClipboardRoundTripTests
             {
                 ClipboardService.CopyImage(path);
 
-                var data = Clipboard.GetDataObject();
-                Assert.NotNull(data);
-                Assert.True(data!.GetDataPresent(DataFormats.Dib), "CF_DIB is missing from the clipboard.");
+                var data = ReadClipboard();
+                Assert.True(data.GetDataPresent(DataFormats.Dib), "CF_DIB is missing from the clipboard.");
 
                 var dib = ReadStream(data, DataFormats.Dib).ToArray();
 
@@ -145,6 +144,34 @@ public class ClipboardRoundTripTests
         encoder.Save(file);
 
         return path;
+    }
+
+    /// <summary>
+    /// Reads the clipboard, retrying briefly. The clipboard is a single machine-wide
+    /// resource, so any other process on the box can be holding it open at the moment a
+    /// test looks. ClipboardService already retries when writing; without the matching
+    /// retry here the test fails for reasons that have nothing to do with the code.
+    /// </summary>
+    private static IDataObject ReadClipboard()
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                var data = Clipboard.GetDataObject();
+                if (data is not null)
+                {
+                    return data;
+                }
+            }
+            catch (ExternalException) when (attempt < 8)
+            {
+                // Held by someone else; fall through to the delay below.
+            }
+
+            Assert.True(attempt < 8, "Could not read the clipboard after several attempts.");
+            Thread.Sleep(120);
+        }
     }
 
     private static MemoryStream ReadStream(IDataObject data, string format)

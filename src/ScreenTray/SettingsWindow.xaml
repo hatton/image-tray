@@ -64,7 +64,7 @@
                        Foreground="{DynamicResource TextBrush}" />
         </Grid>
         <TextBlock Style="{StaticResource SettingsHint}"
-                   Text="Anything older than this goes to the Recycle Bin, so a mistake is always recoverable." />
+                   Text="Anything older than this goes to the Recycle Bin." />
 
         <Separator Margin="0,18" Background="{DynamicResource WindowBorderBrush}" />
 
@@ -92,7 +92,7 @@
                        Foreground="{DynamicResource TextBrush}" />
         </Grid>
         <TextBlock Style="{StaticResource SettingsHint}"
-                   Text="Or just drag the splitter that appears when you point between two thumbnails. Measured against the thumbnail height, so the shape survives resizing the tray." />
+                   Text="Or just drag the splitter that appears when you point between two thumbnails." />
 
         <Separator Margin="0,18" Background="{DynamicResource WindowBorderBrush}" />
 
@@ -114,8 +114,6 @@
                   FontSize="12"
                   Checked="OnShowOnNewScreenshotChanged"
                   Unchecked="OnShowOnNewScreenshotChanged" />
-        <TextBlock Style="{StaticResource SettingsHint}"
-                   Text="It appears without taking focus, so whatever you are typing keeps going where you were typing it." />
 
         <Separator Margin="0,18" Background="{DynamicResource WindowBorderBrush}" />
 
@@ -125,8 +123,6 @@
                   FontSize="12"
                   Checked="OnAutoStartChanged"
                   Unchecked="OnAutoStartChanged" />
-        <TextBlock Style="{StaticResource SettingsHint}"
-                   Text="It comes back the way you left it: open if the strip was open, in the tray if you had closed it." />
 
         <Button Content="Done"
                 Style="{StaticResource AccentButton}"
