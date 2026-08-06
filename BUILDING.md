@@ -25,6 +25,33 @@ Installing matters for one reason: the autostart entry points at wherever the ex
 was when you last enabled it. Running from `bin\Debug` means a `dotnet clean` leaves a dead
 entry in the Run key, which is why `deploy.ps1` puts it somewhere stable.
 
+## The installer
+
+`./build-installer.ps1` publishes Release and compiles `installer/ScreenshotTray.iss` into
+`dist/ScreenshotTraySetup.exe`. It needs [Inno Setup 6](https://jrsoftware.org/isdl.php)
+(`winget install JRSoftware.InnoSetup`); the script says so and stops if it is missing.
+
+The installer is per-user, so no UAC prompt: one executable into
+`%LOCALAPPDATA%\Programs\ScreenshotTray`, one Start menu entry, no desktop shortcut, then
+it launches the app. Every wizard page is disabled because there is nothing to ask about,
+which leaves a brief progress window. `/VERYSILENT` removes even that:
+
+```powershell
+./dist/ScreenshotTraySetup.exe /VERYSILENT
+```
+
+Three things it handles that are easy to get wrong:
+
+- The exe is framework-dependent, so a machine without the .NET 10 Desktop Runtime would
+  get a successful install and an app that never starts. Setup checks for the runtime first
+  and refuses with a message naming the download page.
+- Installing and uninstalling both force-close a running copy, since a tray app is almost
+  always running and a running exe cannot be replaced or deleted. Uninstalling would
+  otherwise strand the executable *after* removing the uninstaller that would retry.
+- Uninstalling deletes the `ScreenshotTray` Run-key value, which the app itself only removes
+  when you turn autostart off. Settings and the log in `%APPDATA%\ScreenshotTray` are left
+  alone.
+
 ## Layout
 
 | Path | What lives there |
@@ -36,6 +63,7 @@ entry in the Run key, which is why `deploy.ps1` puts it somewhere stable.
 | `src/ScreenshotTray/TileMetrics.cs` | All the tile sizing rules, deliberately pure and testable |
 | `tests/ScreenshotTray.Tests` | xunit tests |
 | `tools/make-icon.ps1` | Regenerates `src/ScreenshotTray/Assets/app.ico` |
+| `installer/ScreenshotTray.iss` | The Inno Setup script, built by `build-installer.ps1` |
 
 ## The app icon is generated
 
@@ -48,7 +76,7 @@ editing the `.ico`:
 ```
 
 It writes nine frames, 16 through 256, all from one geometry. Resist the temptation to
-simplify the small frames: an earlier version did, and the result was a taskbar icon that
+simplify the small frames: an earlier version did, and the result was a strip icon that
 did not match the tray icon.
 
 ## Settings and logs
