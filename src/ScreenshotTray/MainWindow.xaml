@@ -9,7 +9,7 @@
         MinWidth="360" MinHeight="124"
         WindowStyle="None"
         ResizeMode="CanResize"
-        ShowInTaskbar="True"
+        ShowInTaskbar="False"
         ShowActivated="False"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
