@@ -1,4 +1,4 @@
-# Building Screenshot Tray
+# Building Image Tray
 
 ## Requirements
 
@@ -11,11 +11,11 @@ needs only the .NET 10 Desktop Runtime.
 ```powershell
 dotnet build
 dotnet test
-dotnet run --project src/ScreenshotTray
+dotnet run --project src/ImageTray
 ```
 
 To produce the single-file executable, install it to
-`%LOCALAPPDATA%\Programs\ScreenshotTray`, and restart the running copy:
+`%LOCALAPPDATA%\Programs\ImageTray`, and restart the running copy:
 
 ```powershell
 ./deploy.ps1
@@ -27,17 +27,17 @@ entry in the Run key, which is why `deploy.ps1` puts it somewhere stable.
 
 ## The installer
 
-`./build-installer.ps1` publishes Release and compiles `installer/ScreenshotTray.iss` into
-`dist/ScreenshotTraySetup.exe`. It needs [Inno Setup 6](https://jrsoftware.org/isdl.php)
+`./build-installer.ps1` publishes Release and compiles `installer/ImageTray.iss` into
+`dist/ImageTraySetup.exe`. It needs [Inno Setup 6](https://jrsoftware.org/isdl.php)
 (`winget install JRSoftware.InnoSetup`); the script says so and stops if it is missing.
 
 The installer is per-user, so no UAC prompt: one executable into
-`%LOCALAPPDATA%\Programs\ScreenshotTray`, one Start menu entry, no desktop shortcut, then
+`%LOCALAPPDATA%\Programs\ImageTray`, one Start menu entry, no desktop shortcut, then
 it launches the app. Every wizard page is disabled because there is nothing to ask about,
 which leaves a brief progress window. `/VERYSILENT` removes even that:
 
 ```powershell
-./dist/ScreenshotTraySetup.exe /VERYSILENT
+./dist/ImageTraySetup.exe /VERYSILENT
 ```
 
 Three things it handles that are easy to get wrong:
@@ -48,26 +48,26 @@ Three things it handles that are easy to get wrong:
 - Installing and uninstalling both force-close a running copy, since a tray app is almost
   always running and a running exe cannot be replaced or deleted. Uninstalling would
   otherwise strand the executable *after* removing the uninstaller that would retry.
-- Uninstalling deletes the `ScreenshotTray` Run-key value, which the app itself only removes
-  when you turn autostart off. Settings and the log in `%APPDATA%\ScreenshotTray` are left
+- Uninstalling deletes the `ImageTray` Run-key value, which the app itself only removes
+  when you turn autostart off. Settings and the log in `%APPDATA%\ImageTray` are left
   alone.
 
 ## Layout
 
 | Path | What lives there |
 | --- | --- |
-| `src/ScreenshotTray/Services` | Folder watching, rotation, clipboard, thumbnails, window placement, autostart |
-| `src/ScreenshotTray/ViewModels` | `TrayViewModel` coordinates everything; `ShotViewModel` is one tile |
-| `src/ScreenshotTray/Controls` | `ShotTile`, including its animations and the width splitter |
-| `src/ScreenshotTray/Theme` | The light and dark palettes, swapped at runtime |
-| `src/ScreenshotTray/TileMetrics.cs` | All the tile sizing rules, deliberately pure and testable |
-| `tests/ScreenshotTray.Tests` | xunit tests |
-| `tools/make-icon.ps1` | Regenerates `src/ScreenshotTray/Assets/app.ico` |
-| `installer/ScreenshotTray.iss` | The Inno Setup script, built by `build-installer.ps1` |
+| `src/ImageTray/Services` | Folder watching, rotation, clipboard, thumbnails, window placement, autostart |
+| `src/ImageTray/ViewModels` | `TrayViewModel` coordinates everything; `ShotViewModel` is one tile |
+| `src/ImageTray/Controls` | `ShotTile`, including its animations and the width splitter |
+| `src/ImageTray/Theme` | The light and dark palettes, swapped at runtime |
+| `src/ImageTray/TileMetrics.cs` | All the tile sizing rules, deliberately pure and testable |
+| `tests/ImageTray.Tests` | xunit tests |
+| `tools/make-icon.ps1` | Regenerates `src/ImageTray/Assets/app.ico` |
+| `installer/ImageTray.iss` | The Inno Setup script, built by `build-installer.ps1` |
 
 ## The app icon is generated
 
-`src/ScreenshotTray/Assets/app.ico` is committed, but it is produced by
+`src/ImageTray/Assets/app.ico` is committed, but it is produced by
 `tools/make-icon.ps1` rather than drawn by hand. Edit the script and re-run it rather than
 editing the `.ico`:
 
@@ -81,11 +81,11 @@ did not match the tray icon.
 
 ## Settings and logs
 
-Both live in `%APPDATA%\ScreenshotTray\`:
+Both live in `%APPDATA%\ImageTray\`:
 
 - `settings.json` — watched folder, keep count, thumbnail width, theme, window placement.
   Delete it to start over; the app will ask for a folder on the next launch.
-- `screenshottray.log` — warnings only, truncated when it passes 256 KB.
+- `imagetray.log` — warnings only, truncated when it passes 256 KB.
 
 Saves are written to a temp file and swapped into place, so a crash mid-write cannot leave
 a corrupt settings file. A file that will not parse falls back to defaults rather than

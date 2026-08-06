@@ -1,4 +1,4 @@
-# Generates src/ScreenshotTray/Assets/app.ico.
+# Generates src/ImageTray/Assets/app.ico.
 #
 # Design: three rounded cards in a row, receding to the right, in analogous cool
 # hues (blue, violet, teal). The front card is leftmost, matching the app, where the
@@ -88,7 +88,7 @@ foreach ($s in $sizes) {
     $ms.Dispose(); $bmp.Dispose()
 }
 
-$out = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\ScreenshotTray\Assets\app.ico'
+$out = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\ImageTray\Assets\app.ico'
 $fs = [System.IO.File]::Create($out)
 $bw = New-Object System.IO.BinaryWriter $fs
 

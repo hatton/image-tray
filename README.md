@@ -1,9 +1,9 @@
-# Screenshot Tray
+# Image Tray
 
 A small vibe-coded Windows app that shows your most recent screenshots in a strip so you can put  
-one back on the clipboard with a single click.
+one back on the clipboard with a single click. It can also notice any image, or image file path, going to the clipboard and grab that.
 
-![Screenshot Tray](docs/screenshot-tray.png)
+![Image Tray](docs/image-tray.png)
 
-![Screenshot Tray settings](docs/settings.png)
+![Image Tray settings](docs/settings.png)
 
