@@ -8,8 +8,8 @@ using ScreenshotTray.ViewModels;
 namespace ScreenshotTray;
 
 /// <summary>
-/// Settings apply as you change them, with a single Done to dismiss. For four
-/// options, an OK/Cancel pair would only add a way to lose your changes.
+/// Settings apply as you change them, with a single Done to dismiss. For a handful
+/// of options, an OK/Cancel pair would only add a way to lose your changes.
 /// </summary>
 public partial class SettingsWindow : Window
 {
@@ -47,6 +47,7 @@ public partial class SettingsWindow : Window
         // to match it, so the two cannot drift for long.
         AutoStartCheck.IsChecked = settings.RunAtLogin;
         PopUpCheck.IsChecked = settings.ShowOnNewScreenshot;
+        ClipboardImagesCheck.IsChecked = settings.IncludeClipboardImages;
 
         CellAspectSlider.Value = TileMetrics.ClampCellAspect(settings.CellAspect);
         UpdateCellAspectText();
@@ -166,6 +167,21 @@ public partial class SettingsWindow : Window
         }
 
         _viewModel.Settings.ShowOnNewScreenshot = PopUpCheck.IsChecked == true;
+        _viewModel.SaveSettings();
+    }
+
+    /// <summary>
+    /// The watcher reads this setting on every clipboard change, so unticking it
+    /// stops the next copy from being saved without anything having to be restarted.
+    /// </summary>
+    private void OnIncludeClipboardImagesChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsInitialized || _loading)
+        {
+            return;
+        }
+
+        _viewModel.Settings.IncludeClipboardImages = ClipboardImagesCheck.IsChecked == true;
         _viewModel.SaveSettings();
     }
 

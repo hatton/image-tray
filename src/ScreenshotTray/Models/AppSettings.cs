@@ -49,6 +49,15 @@ public sealed class AppSettings
     public bool ShowOnNewScreenshot { get; set; } = true;
 
     /// <summary>
+    /// Save images that arrive on the clipboard into the watched folder, so a snip
+    /// that was only ever copied still ends up in the strip. Copied image files, and
+    /// paths to them, count too. On by default: a screenshot you took is a screenshot
+    /// you may want again in a minute, and whether your tool happened to write a file
+    /// is not something you should have to think about.
+    /// </summary>
+    public bool IncludeClipboardImages { get; set; } = true;
+
+    /// <summary>
     /// The shape of every thumbnail cell, width over height. Set by dragging the
     /// splitter between two thumbnails, or by the slider in Settings. Stored as a ratio
     /// rather than a pixel width so the cells keep their shape when the tray height

@@ -32,6 +32,15 @@ public static class ClipboardService
     /// <summary>CF_DIBV5. WPF has no named constant, so it goes on by numeric format name.</summary>
     private static readonly string DibV5FormatName = DataFormats.GetDataFormat(17).Name;
 
+    /// <summary>
+    /// A private format stamped onto everything this app copies, so
+    /// <see cref="ClipboardImageWatcher"/> can tell our own copies apart from
+    /// everybody else's. Without it, clicking a tile would put its image on the
+    /// clipboard, which would be saved back into the folder as a new screenshot,
+    /// which would then be copyable, and so on.
+    /// </summary>
+    public const string OwnCopyFormatName = "ScreenshotTray.OwnCopy";
+
     private const int RetryAttempts = 5;
     private const int RetryDelayMs = 100;
 
@@ -61,6 +70,10 @@ public static class ClipboardService
         data.SetData(DataFormats.Dib, BuildDib(flattened), autoConvert: false);
         data.SetData(DataFormats.Bitmap, flattened, autoConvert: false);
 
+        // Consumers ignore formats they do not know, so this costs nothing but is
+        // what stops us treating our own copy as a newly copied image.
+        data.SetData(OwnCopyFormatName, path, autoConvert: false);
+
         SetWithRetry(data);
     }
 
@@ -69,6 +82,7 @@ public static class ClipboardService
     {
         var data = new DataObject();
         data.SetData(DataFormats.UnicodeText, path, autoConvert: true);
+        data.SetData(OwnCopyFormatName, path, autoConvert: false);
         SetWithRetry(data);
     }
 

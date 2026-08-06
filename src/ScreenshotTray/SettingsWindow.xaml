@@ -117,6 +117,17 @@
 
         <Separator Margin="0,18" Background="{DynamicResource WindowBorderBrush}" />
 
+        <CheckBox x:Name="ClipboardImagesCheck"
+                  Content="Include images copied to the clipboard"
+                  Foreground="{DynamicResource TextBrush}"
+                  FontSize="12"
+                  Checked="OnIncludeClipboardImagesChanged"
+                  Unchecked="OnIncludeClipboardImagesChanged" />
+        <TextBlock Style="{StaticResource SettingsHint}"
+                   Text="A snip you only copied, a picture copied from a web page, or an image file you copied in Explorer gets saved into the watched folder and joins the strip." />
+
+        <Separator Margin="0,18" Background="{DynamicResource WindowBorderBrush}" />
+
         <CheckBox x:Name="AutoStartCheck"
                   Content="Start Screenshot Tray when I sign in to Windows"
                   Foreground="{DynamicResource TextBrush}"

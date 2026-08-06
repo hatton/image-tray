@@ -33,6 +33,7 @@ public partial class App : Application
     private TrayViewModel? _viewModel;
     private MainWindow? _window;
     private TaskbarIcon? _trayIcon;
+    private ClipboardImageWatcher? _clipboardWatcher;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -92,6 +93,11 @@ public partial class App : Application
         _window = new MainWindow(_viewModel);
         _viewModel.NewScreenshotArrived += (_, _) => _window?.ShowForNewScreenshot();
         _viewModel.Start();
+
+        // Started whatever the setting says, since it reads the setting on each
+        // change; toggling it in Settings then takes effect straight away.
+        _clipboardWatcher = new ClipboardImageWatcher(_settings);
+        _clipboardWatcher.Start();
 
         CreateTrayIcon();
 
@@ -332,6 +338,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
+        _clipboardWatcher?.Dispose();
         _viewModel?.Dispose();
         _singleInstance?.Dispose();
 
