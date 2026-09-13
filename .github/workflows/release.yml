@@ -1,0 +1,136 @@
+name: Release
+
+# Started by hand, from the Actions tab or with:
+#   gh workflow run release.yml -f bump=minor
+#
+# There is deliberately no push or tag trigger. A release picks a version number and
+# writes a commit back to main, and neither of those should happen because somebody
+# pushed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version number to raise
+        type: choice
+        default: minor
+        options:
+          - minor
+          - patch
+          - major
+      version:
+        description: An exact version to release instead, such as 1.4.0
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+# Two of these at once would bump from the same starting number and fight over the tag.
+concurrency:
+  group: release
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Releases come from main
+        if: github.ref_name != 'main'
+        run: throw "This was started on '${{ github.ref_name }}'. Run it from main."
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test
+        run: dotnet test ImageTray.slnx --nologo
+
+      - name: Raise the version number
+        id: version
+        # The inputs arrive as environment variables rather than being pasted into the
+        # script, so a version string full of quotes is a bad argument and not a
+        # command.
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXACT_VERSION: ${{ inputs.version }}
+        run: |
+          $next = ./tools/set-version.ps1 -Bump $env:BUMP -Version $env:EXACT_VERSION
+          Write-Host "Releasing $next"
+          "version=$next" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag=v$next" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: That tag has to be free
+        run: |
+          git fetch --tags --quiet
+          if (git tag --list '${{ steps.version.outputs.tag }}') {
+            throw "${{ steps.version.outputs.tag }} already exists. Release a different version."
+          }
+
+      - name: Inno Setup
+        run: |
+          # build-installer.ps1 looks for ISCC at exactly this path.
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress --yes
+          }
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup is still not at $iscc after installing it."
+          }
+
+      - name: Build the installer
+        run: ./build-installer.ps1
+
+      - name: The build has to agree about the version
+        run: |
+          # Catches a bump that did not reach the exe, which would otherwise ship an
+          # installer quietly calling itself the previous version.
+          $built = [version](Get-Item publish/ImageTray.exe).VersionInfo.FileVersion
+          $want = [version]'${{ steps.version.outputs.version }}.0'
+          if ($built -ne $want) {
+            throw "The exe says $built and the release says $want."
+          }
+
+      - name: Record the version that shipped
+        run: |
+          $tag = '${{ steps.version.outputs.tag }}'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add src/ImageTray/ImageTray.csproj
+          git commit -m "Release $tag"
+          if ($LASTEXITCODE -ne 0) { throw "Could not commit the version bump." }
+
+          git tag $tag
+          if ($LASTEXITCODE -ne 0) { throw "Could not tag $tag." }
+
+          git push origin HEAD:main
+          if ($LASTEXITCODE -ne 0) { throw "Could not push the version bump to main." }
+
+          git push origin $tag
+          if ($LASTEXITCODE -ne 0) { throw "Could not push $tag." }
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # --generate-notes appends the commit list; these lines come first.
+          $notes = @(
+            'Download **ImageTraySetup.exe** below and run it. It installs per-user, so there is no UAC prompt, and it starts the app when it finishes. Add `/VERYSILENT` for no window at all.'
+            ''
+            'It needs the [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/10.0). Setup checks for that first and says so, rather than installing an app that would never start.'
+          ) -join "`n"
+
+          gh release create '${{ steps.version.outputs.tag }}' dist/ImageTraySetup.exe --title 'Image Tray ${{ steps.version.outputs.version }}' --notes $notes --generate-notes
+
+          # The commit and tag are already pushed by this point, so a failure here
+          # leaves a version nobody can download. Recover by running
+          # `gh release create <tag> dist/ImageTraySetup.exe` against a local build of
+          # that tag, rather than by releasing a new version.
+          if ($LASTEXITCODE -ne 0) { throw "The tag is pushed but the release was not created." }

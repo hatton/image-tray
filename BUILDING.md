@@ -52,6 +52,49 @@ Three things it handles that are easy to get wrong:
   when you turn autostart off. Settings and the log in `%APPDATA%\ImageTray` are left
   alone.
 
+## Releasing
+
+Releases are cut by the **Release** workflow in the Actions tab, started by hand. Pick how
+far to raise the version and press the button, or from a terminal:
+
+```powershell
+gh workflow run release.yml -f bump=minor
+```
+
+`bump` is `minor` by default, with `patch` and `major` there too; a `version` input takes an
+exact number such as `1.4.0` and overrides the bump. The run tests, raises `<Version>` in
+`src/ImageTray/ImageTray.csproj`, and builds the installer on a Windows runner. Only once
+all of that has passed does it commit the new version number back to `main`, tag it, and
+publish the GitHub release with `dist/ImageTraySetup.exe` attached. A failing test or build
+leaves the repository exactly as it was, so a broken build cannot spend a version number.
+
+The commit comes before the release rather than after it because the release hangs off a tag.
+Tagging first and committing afterwards would leave `v1.1.0` pointing at a tree that still
+builds 1.0.0.
+
+`tools/set-version.ps1` does the raising and prints the new number. It is the only place a
+version is written: the build stamps `<Version>` on the exe, and the installer reads it back
+off the exe, so nothing else needs editing. `-DryRun` says what it would do:
+
+```powershell
+./tools/set-version.ps1 -Bump patch -DryRun
+```
+
+Two things the workflow refuses to do. It will not run from a branch other than `main`, and
+it will not reuse a tag. It also compares the built exe's file version against the version
+being released, which catches a bump that did not reach the build and would otherwise ship an
+installer calling itself the previous version.
+
+The one messy failure is the release step itself: the commit and the tag are pushed before it
+runs, so if it fails there is a tagged version with nothing to download. Build that tag
+locally and attach the installer to it by hand rather than releasing a new version:
+
+```powershell
+git checkout v1.1.0
+./build-installer.ps1
+gh release create v1.1.0 dist/ImageTraySetup.exe
+```
+
 ## Layout
 
 | Path | What lives there |
