@@ -112,18 +112,10 @@
         <Storyboard x:Key="HoverIn">
             <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
                              To="1" Duration="0:0:0.12" />
-            <DoubleAnimation Storyboard.TargetName="PathButton" Storyboard.TargetProperty="Opacity"
-                             To="1" Duration="0:0:0.12" />
-            <DoubleAnimation Storyboard.TargetName="TrashButton" Storyboard.TargetProperty="Opacity"
-                             To="1" Duration="0:0:0.12" />
         </Storyboard>
 
         <Storyboard x:Key="HoverOut">
             <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
-                             To="0" Duration="0:0:0.18" />
-            <DoubleAnimation Storyboard.TargetName="PathButton" Storyboard.TargetProperty="Opacity"
-                             To="0" Duration="0:0:0.18" />
-            <DoubleAnimation Storyboard.TargetName="TrashButton" Storyboard.TargetProperty="Opacity"
                              To="0" Duration="0:0:0.18" />
         </Storyboard>
 
@@ -137,15 +129,6 @@
                              To="0" Duration="0:0:0.15" />
         </Storyboard>
 
-        <!-- Tabbing to a corner button has to reveal it too, or keyboard users are
-             clicking something invisible. -->
-        <Storyboard x:Key="RevealCornerButtons">
-            <DoubleAnimation Storyboard.TargetName="PathButton" Storyboard.TargetProperty="Opacity"
-                             To="1" Duration="0:0:0.1" />
-            <DoubleAnimation Storyboard.TargetName="TrashButton" Storyboard.TargetProperty="Opacity"
-                             To="1" Duration="0:0:0.1" />
-        </Storyboard>
-
     </UserControl.Resources>
 
     <Grid x:Name="Root">
@@ -157,9 +140,10 @@
         </Grid.ColumnDefinitions>
 
         <!-- Hover state is driven from the card area rather than the whole control, so
-             pointing at the gap does not also light up the previous thumbnail's
-             buttons. -->
-        <Grid x:Name="CardArea">
+             pointing at the gap does not also light up the previous thumbnail. -->
+        <Grid x:Name="CardArea"
+              MouseEnter="OnCardAreaEnter"
+              MouseLeave="OnCardAreaLeave">
 
             <Grid.Triggers>
                 <EventTrigger RoutedEvent="Mouse.MouseEnter">
@@ -170,11 +154,13 @@
                 </EventTrigger>
             </Grid.Triggers>
 
-        <!-- The whole thumbnail is one button, so clicking anywhere on the image
-             copies it. -->
+        <!-- The whole thumbnail is one button, and clicking anywhere on it opens
+             the image at full size. Nothing else is on the tile: copying and
+             recycling are on the preview, where there is room to label them and no
+             chance of hitting one while reaching for the thumbnail. -->
         <Button x:Name="CardButton"
                 Style="{StaticResource BareButton}"
-                Command="{Binding CopyImageCommand}"
+                Click="OnCardClicked"
                 ToolTip="{Binding Tooltip}"
                 PreviewMouseLeftButtonDown="OnCardPressed"
                 PreviewMouseLeftButtonUp="OnCardReleased"
@@ -228,37 +214,6 @@
                         Opacity="0"
                         IsHitTestVisible="False" />
             </Grid>
-        </Button>
-
-        <!-- The file-shaped button copies the full path instead of the image. -->
-        <Button x:Name="PathButton"
-                Style="{StaticResource CornerButton}"
-                Command="{Binding CopyPathCommand}"
-                ToolTip="Copy the full file path"
-                Opacity="0"
-                Margin="0,6,6,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                GotKeyboardFocus="OnCornerButtonFocused">
-            <TextBlock Text="&#xE7C3;"
-                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                       FontSize="12" />
-        </Button>
-
-        <!-- Straight to the Recycle Bin. No confirmation: the Recycle Bin already is
-             the undo, and a dialog here would cost the click the app exists to save. -->
-        <Button x:Name="TrashButton"
-                Style="{StaticResource CornerDangerButton}"
-                Command="{Binding DeleteCommand}"
-                ToolTip="Send this image to the Recycle Bin"
-                Opacity="0"
-                Margin="6,0,0,6"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Bottom"
-                GotKeyboardFocus="OnCornerButtonFocused">
-            <TextBlock Text="&#xE74D;"
-                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                       FontSize="12" />
         </Button>
 
         <!-- Fixed dark-on-white-border colours rather than theme brushes: this sits

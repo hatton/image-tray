@@ -124,6 +124,11 @@
                     </ItemsControl>
                 </ScrollViewer>
 
+                <!-- The full-size look at one image. It has no layout footprint: the
+                     popup inside it is its own top-level surface, which is what lets
+                     it hang above or below a 200px strip. -->
+                <controls:ImagePreview x:Name="Preview" />
+
                 <!-- Empty state, which doubles as the way out of a missing folder -->
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"

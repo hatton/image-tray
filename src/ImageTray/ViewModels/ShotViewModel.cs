@@ -62,7 +62,7 @@ public sealed partial class ShotViewModel : ObservableObject
                 ? $"{Shot.PixelWidth} × {Shot.PixelHeight}"
                 : "size not read yet";
 
-            return $"{Shot.FileName}\n{size}\n{Shot.LastWriteUtc.ToLocalTime():g}\n\nClick to copy the image";
+            return $"{Shot.FileName}\n{size}\n{Shot.LastWriteUtc.ToLocalTime():g}\n\nClick to see it full size";
         }
     }
 

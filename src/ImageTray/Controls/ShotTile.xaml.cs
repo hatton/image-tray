@@ -9,8 +9,8 @@ using ImageTray.ViewModels;
 namespace ImageTray.Controls;
 
 /// <summary>
-/// One screenshot in the strip: the thumbnail, the corner button that copies the
-/// path, and all the feedback that makes a copy feel like it happened.
+/// One image in the strip: the thumbnail, and all the feedback that makes a copy
+/// feel like it happened. Copying and recycling live on the preview.
 /// </summary>
 /// <remarks>
 /// The animations live in this control's XAML and are started from here rather
@@ -48,6 +48,16 @@ public partial class ShotTile : UserControl
         typeof(CellWidthDragEventHandler),
         typeof(ShotTile));
 
+    /// <summary>
+    /// Raised when the pointer arrives on the thumbnail, leaves it, or clicks it.
+    /// Bubbles so the window can answer with the one preview surface it owns.
+    /// </summary>
+    public static readonly RoutedEvent PreviewRequestedEvent = EventManager.RegisterRoutedEvent(
+        nameof(PreviewRequested),
+        RoutingStrategy.Bubble,
+        typeof(PreviewRequestEventHandler),
+        typeof(ShotTile));
+
     /// <summary>The width of the gap that carries the splitter.</summary>
     private const double GripWidth = 12;
 
@@ -83,6 +93,12 @@ public partial class ShotTile : UserControl
     {
         add => AddHandler(CellWidthDragEvent, value);
         remove => RemoveHandler(CellWidthDragEvent, value);
+    }
+
+    public event PreviewRequestEventHandler PreviewRequested
+    {
+        add => AddHandler(PreviewRequestedEvent, value);
+        remove => RemoveHandler(PreviewRequestedEvent, value);
     }
 
     private static void OnSizingInputChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
@@ -187,7 +203,22 @@ public partial class ShotTile : UserControl
 
     private void OnCardReleased(object sender, RoutedEventArgs e) => Play("PressUp");
 
-    private void OnCornerButtonFocused(object sender, KeyboardFocusChangedEventArgs e) => Play("RevealCornerButtons");
+    /// <summary>
+    /// Clicking the thumbnail asks for the image at full size, which is the only
+    /// thing a tile does. Copying and recycling are buttons on the preview.
+    /// </summary>
+    private void OnCardClicked(object sender, RoutedEventArgs e) => AskForPreview(PreviewRequest.Clicked);
+
+    private void OnCardAreaEnter(object sender, MouseEventArgs e) => AskForPreview(PreviewRequest.Pointed);
+
+    private void OnCardAreaLeave(object sender, MouseEventArgs e) => AskForPreview(PreviewRequest.Away);
+
+    /// <summary>
+    /// The card rather than the whole control is the anchor, so the preview lines up
+    /// with the thumbnail and not with the splitter gap that follows it.
+    /// </summary>
+    private void AskForPreview(PreviewRequest request) =>
+        RaiseEvent(new PreviewRequestEventArgs(PreviewRequestedEvent, _shot, request, CardArea));
 
     private void OnGripMouseEnter(object sender, MouseEventArgs e) => Play("GripIn");
 

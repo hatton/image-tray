@@ -84,6 +84,75 @@
         </Setter>
     </Style>
 
+    <!-- A labelled button that sits on top of an image, so it takes the same fixed
+         dark treatment as the corner buttons for the same reason: it has to be
+         readable over whatever the screenshot happens to contain. -->
+    <Style x:Key="OverlayButton" TargetType="Button">
+        <Setter Property="Height" Value="26" />
+        <Setter Property="MinWidth" Value="72" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome"
+                            Background="#E6141518"
+                            BorderBrush="#59FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="13">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#F2000000" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="White" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#FF2A2D33" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Same, but red on hover, so the destructive one announces itself. Sized to a
+         square, because it carries only the wastebasket glyph and a wide pill would
+         read as the most important thing in the row. -->
+    <Style x:Key="OverlayDangerButton" TargetType="Button" BasedOn="{StaticResource OverlayButton}">
+        <Setter Property="MinWidth" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome"
+                            Background="#E6141518"
+                            BorderBrush="#59FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="13">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#F2D93A3A" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="White" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#FFA82B2B" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Title-bar buttons: the settings gear and the close X. -->
     <Style x:Key="ChromeButton" TargetType="Button">
         <Setter Property="Width" Value="32" />

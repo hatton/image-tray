@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 using ImageTray.Models;
 
 namespace ImageTray.Services;
@@ -24,6 +25,7 @@ public static partial class WindowPlacementService
     private const int SW_SHOWMAXIMIZED = 3;
 
     private const uint MONITOR_DEFAULTTONULL = 0;
+    private const uint MONITOR_DEFAULTTONEAREST = 2;
     private const uint SPI_GETWORKAREA = 0x0030;
 
     /// <summary>
@@ -167,6 +169,48 @@ public static partial class WindowPlacementService
         window.Top = Math.Max(work.Top, work.Bottom - window.Height - 24);
     }
 
+    /// <summary>
+    /// The usable area of the display the window is on, in the device-independent
+    /// units the rest of WPF works in.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="SystemParameters.WorkArea"/> would be one line, and it answers for
+    /// the primary display whichever one you are actually on. The strip is a
+    /// multi-monitor app by nature, so the preview has to be sized against the
+    /// display it will open on rather than against whichever display Windows calls
+    /// first. Falls back to the primary work area when the window has no handle yet.
+    /// </remarks>
+    public static Rect WorkAreaFor(Window window)
+    {
+        var handle = HandleOf(window);
+        if (handle == IntPtr.Zero)
+        {
+            return SystemParameters.WorkArea;
+        }
+
+        var monitor = MonitorFromWindow(handle, MONITOR_DEFAULTTONEAREST);
+        if (monitor == IntPtr.Zero)
+        {
+            return SystemParameters.WorkArea;
+        }
+
+        var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+        if (!GetMonitorInfoW(monitor, ref info))
+        {
+            return SystemParameters.WorkArea;
+        }
+
+        // GetMonitorInfo answers in physical pixels; everything downstream of here
+        // measures in WPF's units, and on a 150% display those differ by half again.
+        var scale = VisualTreeHelper.GetDpi(window);
+
+        return new Rect(
+            info.rcWork.Left / scale.DpiScaleX,
+            info.rcWork.Top / scale.DpiScaleY,
+            Math.Max(1, (info.rcWork.Right - info.rcWork.Left) / scale.DpiScaleX),
+            Math.Max(1, (info.rcWork.Bottom - info.rcWork.Top) / scale.DpiScaleY));
+    }
+
     private static IntPtr HandleOf(Window window) =>
         PresentationSource.FromVisual(window) is HwndSource source ? source.Handle : IntPtr.Zero;
 
@@ -227,6 +271,9 @@ public static partial class WindowPlacementService
 
     [LibraryImport("user32.dll")]
     private static partial IntPtr MonitorFromRect(ref RECT lprc, uint dwFlags);
+
+    [LibraryImport("user32.dll")]
+    private static partial IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
